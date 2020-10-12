@@ -5,7 +5,9 @@
 
 package io.opentelemetry.sdk.metrics;
 
+import com.google.common.collect.ImmutableSet;
 import io.opentelemetry.api.common.Labels;
+import io.opentelemetry.api.common.ReadWriteLabels;
 import io.opentelemetry.sdk.metrics.aggregation.Accumulation;
 import io.opentelemetry.sdk.metrics.aggregator.Aggregator;
 import io.opentelemetry.sdk.metrics.aggregator.AggregatorHandle;
@@ -21,16 +23,25 @@ final class SynchronousInstrumentAccumulator<T extends Accumulation> {
   private final ReentrantLock collectLock;
   private final Aggregator<T> aggregator;
   private final InstrumentProcessor<T> instrumentProcessor;
+  private final ImmutableSet<MetricsProcessor> metricsProcessors;
 
-  SynchronousInstrumentAccumulator(InstrumentProcessor<T> instrumentProcessor) {
+  SynchronousInstrumentAccumulator(
+      InstrumentProcessor<T> instrumentProcessor,
+      ImmutableSet<MetricsProcessor> metricsProcessors) {
+    this.metricsProcessors = metricsProcessors;
     aggregatorLabels = new ConcurrentHashMap<>();
     collectLock = new ReentrantLock();
     this.instrumentProcessor = instrumentProcessor;
     this.aggregator = instrumentProcessor.getAggregation().getAggregator();
   }
 
-  AggregatorHandle<?> bind(Labels labels) {
+  AggregatorHandle<?> bind(Labels labels, AbstractSynchronousInstrument instrument) {
     Objects.requireNonNull(labels, "labels");
+    Objects.requireNonNull(instrument, "instrument");
+    ReadWriteLabels rwLabels = new ReadWriteLabels(labels);
+    metricsProcessors.forEach(p -> p.onLabelsBound(instrument, rwLabels));
+    labels = rwLabels.toLabels();
+
     AggregatorHandle<T> aggregatorHandle = aggregatorLabels.get(labels);
     if (aggregatorHandle != null && aggregatorHandle.acquire()) {
       // At this moment it is guaranteed that the Bound is in the map and will not be removed.

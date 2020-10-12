@@ -39,6 +39,7 @@ abstract class AbstractSynchronousInstrumentBuilder<
     return new SynchronousInstrumentAccumulator<>(
         meterProviderSharedState
             .getViewRegistry()
-            .createBatcher(meterProviderSharedState, meterSharedState, descriptor));
+            .createBatcher(meterProviderSharedState, meterSharedState, descriptor),
+        meterSharedState.getMetricsProcessors());
   }
 }

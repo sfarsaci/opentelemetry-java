@@ -6,7 +6,9 @@
 package io.opentelemetry.sdk.metrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
+import com.google.common.collect.ImmutableSet;
 import io.opentelemetry.api.common.Labels;
 import io.opentelemetry.sdk.common.InstrumentationLibraryInfo;
 import io.opentelemetry.sdk.internal.TestClock;
@@ -35,13 +37,17 @@ public class SynchronousInstrumentAccumulatorTest {
                 DESCRIPTOR,
                 providerSharedState,
                 meterSharedState,
-                AggregationFactory.count().create(DESCRIPTOR.getValueType())));
-    AggregatorHandle<?> aggregatorHandle = accumulator.bind(Labels.of("K", "V"));
-    AggregatorHandle<?> duplicateAggregatorHandle = accumulator.bind(Labels.of("K", "V"));
+                AggregationFactory.count().create(DESCRIPTOR.getValueType())),
+            ImmutableSet.of());
+    AggregatorHandle<?> aggregatorHandle =
+        accumulator.bind(Labels.of("K", "V"), mock(AbstractSynchronousInstrument.class));
+    AggregatorHandle<?> duplicateAggregatorHandle =
+        accumulator.bind(Labels.of("K", "V"), mock(AbstractSynchronousInstrument.class));
     try {
       assertThat(duplicateAggregatorHandle).isSameAs(aggregatorHandle);
       accumulator.collectAll();
-      AggregatorHandle<?> anotherDuplicateAggregatorHandle = accumulator.bind(Labels.of("K", "V"));
+      AggregatorHandle<?> anotherDuplicateAggregatorHandle =
+          accumulator.bind(Labels.of("K", "V"), mock(AbstractSynchronousInstrument.class));
       try {
         assertThat(anotherDuplicateAggregatorHandle).isSameAs(aggregatorHandle);
       } finally {

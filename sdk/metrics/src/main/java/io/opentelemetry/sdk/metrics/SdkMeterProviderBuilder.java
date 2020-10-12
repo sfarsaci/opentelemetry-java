@@ -19,6 +19,8 @@ public final class SdkMeterProviderBuilder {
 
   private Clock clock = SystemClock.getInstance();
   private Resource resource = Resource.getDefault();
+  private final MeterSharedState.Builder meterSharedStateBuilder =
+      MeterSharedState.builder().setInstrumentRegistry(new InstrumentRegistry());
 
   SdkMeterProviderBuilder() {}
 
@@ -43,6 +45,19 @@ public final class SdkMeterProviderBuilder {
   public SdkMeterProviderBuilder setResource(@Nonnull Resource resource) {
     Objects.requireNonNull(resource, "resource");
     this.resource = resource;
+    return this;
+  }
+
+  /**
+   * Adds a {@link MetricsProcessor} to be process all Spans created by Tracers.
+   *
+   * @param accumulatorProcessor A MetricProcessor implementation
+   */
+  public SdkMeterProviderBuilder addMetricsProcessor(
+      @Nonnull MetricsProcessor accumulatorProcessor) {
+    Objects.requireNonNull(meterSharedStateBuilder)
+        .metricsProcessorsBuilder()
+        .add(Objects.requireNonNull(accumulatorProcessor));
     return this;
   }
 
