@@ -7,7 +7,7 @@ package io.opentelemetry.sdk.metrics;
 
 import com.google.common.collect.ImmutableSet;
 import io.opentelemetry.api.common.Labels;
-import io.opentelemetry.api.common.ReadWriteLabels;
+import io.opentelemetry.context.Context;
 import io.opentelemetry.sdk.metrics.aggregation.Accumulation;
 import io.opentelemetry.sdk.metrics.aggregator.Aggregator;
 import io.opentelemetry.sdk.metrics.aggregator.AggregatorHandle;
@@ -38,9 +38,9 @@ final class SynchronousInstrumentAccumulator<T extends Accumulation> {
   AggregatorHandle<?> bind(Labels labels, AbstractSynchronousInstrument instrument) {
     Objects.requireNonNull(labels, "labels");
     Objects.requireNonNull(instrument, "instrument");
-    ReadWriteLabels rwLabels = new ReadWriteLabels(labels);
-    metricsProcessors.forEach(p -> p.onLabelsBound(instrument, rwLabels));
-    labels = rwLabels.toLabels();
+    for (MetricsProcessor mp : metricsProcessors) {
+      labels = mp.onLabelsBound(Context.current(), instrument.getDescriptor(), labels);
+    }
 
     AggregatorHandle<T> aggregatorHandle = aggregatorLabels.get(labels);
     if (aggregatorHandle != null && aggregatorHandle.acquire()) {
