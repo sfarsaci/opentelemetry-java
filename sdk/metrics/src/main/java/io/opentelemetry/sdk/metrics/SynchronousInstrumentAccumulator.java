@@ -39,7 +39,7 @@ final class SynchronousInstrumentAccumulator<T extends Accumulation> {
     Objects.requireNonNull(labels, "labels");
     Objects.requireNonNull(instrument, "instrument");
     for (MetricsProcessor mp : metricsProcessors) {
-      labels = mp.onLabelsBound(Context.current(), instrument.getDescriptor(), labels);
+      labels = mp.onLabelsBound(Context.current(), instrument, labels);
     }
 
     AggregatorHandle<T> aggregatorHandle = aggregatorLabels.get(labels);
