@@ -40,6 +40,7 @@ if (file('.git').exists()) {
 
 subprojects {
     group = "io.opentelemetry"
+    version = "0.13.1-atlassian-1"
 
     plugins.withId("java") {
         plugins.apply('checkstyle')
@@ -53,6 +54,10 @@ subprojects {
         archivesBaseName = "opentelemetry-${project.name}"
 
         repositories {
+            maven {
+                name "maven-atlassian-com"
+                url = 'https://packages.atlassian.com/maven/repository/internal'
+            }
             mavenCentral()
             jcenter()
             mavenLocal()
@@ -435,6 +440,16 @@ subprojects {
         }
 
         publishing {
+            repositories {
+                maven {
+                    name "atlassian-3rdparty"
+                    url = 'https://packages.atlassian.com/maven/3rdparty'
+                    credentials {
+                        username maven_user
+                        password maven_password
+                    }
+                }
+            }
             publications {
                 mavenPublication(MavenPublication) {
                     version project.name.endsWith('metrics') ? "${version}".replaceFirst(/^(\d+)\.(\d+).(\d+)/) { _, major, minor, patch ->
