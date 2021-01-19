@@ -8,6 +8,7 @@ package io.opentelemetry.sdk.metrics;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.google.common.collect.ImmutableList;
 import io.opentelemetry.sdk.common.InstrumentationLibraryInfo;
 import io.opentelemetry.sdk.metrics.common.InstrumentDescriptor;
 import io.opentelemetry.sdk.metrics.common.InstrumentType;
@@ -29,7 +30,7 @@ class InstrumentRegistryTest {
   @Test
   void register() {
     MeterSharedState meterSharedState =
-        MeterSharedState.create(InstrumentationLibraryInfo.getEmpty());
+        MeterSharedState.create(InstrumentationLibraryInfo.getEmpty(), ImmutableList.of());
     TestInstrument testInstrument = new TestInstrument(INSTRUMENT_DESCRIPTOR);
     assertThat(meterSharedState.getInstrumentRegistry().register(testInstrument))
         .isSameAs(testInstrument);
@@ -45,7 +46,7 @@ class InstrumentRegistryTest {
   @Test
   void register_OtherDescriptor() {
     MeterSharedState meterSharedState =
-        MeterSharedState.create(InstrumentationLibraryInfo.getEmpty());
+        MeterSharedState.create(InstrumentationLibraryInfo.getEmpty(), ImmutableList.of());
     TestInstrument testInstrument = new TestInstrument(INSTRUMENT_DESCRIPTOR);
     assertThat(meterSharedState.getInstrumentRegistry().register(testInstrument))
         .isSameAs(testInstrument);
@@ -62,7 +63,7 @@ class InstrumentRegistryTest {
   @Test
   void register_OtherInstance() {
     MeterSharedState meterSharedState =
-        MeterSharedState.create(InstrumentationLibraryInfo.getEmpty());
+        MeterSharedState.create(InstrumentationLibraryInfo.getEmpty(), ImmutableList.of());
     TestInstrument testInstrument = new TestInstrument(INSTRUMENT_DESCRIPTOR);
     assertThat(meterSharedState.getInstrumentRegistry().register(testInstrument))
         .isSameAs(testInstrument);

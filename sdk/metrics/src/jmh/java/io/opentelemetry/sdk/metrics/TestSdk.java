@@ -5,6 +5,7 @@
 
 package io.opentelemetry.sdk.metrics;
 
+import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.Immutable;
 import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.sdk.common.InstrumentationLibraryInfo;
@@ -28,7 +29,9 @@ public enum TestSdk {
           InstrumentationLibraryInfo instrumentationLibraryInfo =
               InstrumentationLibraryInfo.create("io.opentelemetry.sdk.metrics", null);
 
-          return new SdkMeter(meterProviderSharedState, instrumentationLibraryInfo);
+          return new SdkMeter(
+              meterProviderSharedState,
+              MeterSharedState.create(instrumentationLibraryInfo, ImmutableList.of()));
         }
       });
 

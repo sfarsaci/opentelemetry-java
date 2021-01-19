@@ -6,6 +6,8 @@
 package io.opentelemetry.sdk.metrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
@@ -16,6 +18,7 @@ import io.opentelemetry.api.metrics.DoubleValueRecorder;
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.LongUpDownCounter;
 import io.opentelemetry.api.metrics.LongValueRecorder;
+import io.opentelemetry.context.Context;
 import io.opentelemetry.sdk.common.InstrumentationLibraryInfo;
 import io.opentelemetry.sdk.internal.TestClock;
 import io.opentelemetry.sdk.metrics.aggregator.AggregatorFactory;
@@ -34,6 +37,7 @@ import io.opentelemetry.sdk.metrics.data.ValueAtPercentile;
 import io.opentelemetry.sdk.metrics.view.InstrumentSelector;
 import io.opentelemetry.sdk.resources.Resource;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import org.junit.jupiter.api.Test;
 
@@ -665,6 +669,33 @@ public class SdkMeterProviderTest {
                     Collections.singletonList(
                         LongPointData.create(
                             testClock.now() - 100, testClock.now(), Labels.empty(), 2)))));
+  }
+
+  @Test
+  public void shouldBindInstrumentsWithRegisteredMetricProcessors() {
+    final MetricsProcessor metricsProcessor = mock(MetricsProcessor.class);
+
+    final SdkMeterProvider meterProvider =
+        SdkMeterProvider.builder().addMetricsProcessor(metricsProcessor).build();
+
+    final LongCounter counter =
+        meterProvider.get("instrumentation-name").longCounterBuilder("counter").build();
+
+    when(metricsProcessor.onLabelsBound(Context.current(), counter, Labels.of("k1", "v1")))
+        .thenReturn(Labels.of("k2", "v2"));
+    when(metricsProcessor.onLabelsBound(Context.current(), counter, Labels.of("k2", "v2")))
+        .thenReturn(Labels.of("k2", "v2"));
+
+    counter.add(1, Labels.of("k1", "v1"));
+    counter.add(2, Labels.of("k2", "v2"));
+
+    final Collection<MetricData> metricData = meterProvider.collectAllMetrics();
+    assertThat(metricData).hasSize(1);
+
+    final LongPointData dataPoint =
+        metricData.iterator().next().getLongSumData().getPoints().iterator().next();
+    assertThat(dataPoint.getValue()).isEqualTo(3);
+    assertThat(dataPoint.getLabels()).isEqualTo(Labels.of("k2", "v2"));
   }
 
   private static void registerViewForAllTypes(

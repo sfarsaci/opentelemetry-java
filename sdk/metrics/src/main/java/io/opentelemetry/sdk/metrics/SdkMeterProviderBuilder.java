@@ -5,6 +5,7 @@
 
 package io.opentelemetry.sdk.metrics;
 
+import com.google.common.collect.ImmutableList;
 import io.opentelemetry.api.metrics.GlobalMetricsProvider;
 import io.opentelemetry.sdk.common.Clock;
 import io.opentelemetry.sdk.internal.SystemClock;
@@ -20,6 +21,8 @@ public final class SdkMeterProviderBuilder {
 
   private Clock clock = SystemClock.getInstance();
   private Resource resource = Resource.getDefault();
+  private final ImmutableList.Builder<MetricsProcessor> metricsProcessorBuilder =
+      ImmutableList.builder();
 
   SdkMeterProviderBuilder() {}
 
@@ -48,6 +51,19 @@ public final class SdkMeterProviderBuilder {
   }
 
   /**
+   * Adds a {@link MetricsProcessor}. All the {@link MetricsProcessor} added will be attached to all
+   * Metrics created by Meters.
+   *
+   * @param metricsProcessor A MetricsProcessor implementation.
+   * @return this
+   */
+  public SdkMeterProviderBuilder addMetricsProcessor(@Nonnull MetricsProcessor metricsProcessor) {
+    Objects.requireNonNull(metricsProcessor, "metricsProcessor");
+    this.metricsProcessorBuilder.add(metricsProcessor);
+    return this;
+  }
+
+  /**
    * Returns a new {@link SdkMeterProvider} built with the configuration of this {@link
    * SdkMeterProviderBuilder} and registers it as the global {@link
    * io.opentelemetry.api.metrics.MeterProvider}.
@@ -71,6 +87,6 @@ public final class SdkMeterProviderBuilder {
    * @see GlobalMetricsProvider
    */
   public SdkMeterProvider build() {
-    return new SdkMeterProvider(clock, resource);
+    return new SdkMeterProvider(clock, resource, metricsProcessorBuilder.build());
   }
 }

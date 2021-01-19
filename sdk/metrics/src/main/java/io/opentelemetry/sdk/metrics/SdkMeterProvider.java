@@ -5,6 +5,7 @@
 
 package io.opentelemetry.sdk.metrics;
 
+import com.google.common.collect.ImmutableList;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.metrics.MeterProvider;
 import io.opentelemetry.sdk.common.Clock;
@@ -39,11 +40,16 @@ public final class SdkMeterProvider implements MeterProvider, MetricProducer {
   private final ComponentRegistry<SdkMeter> registry;
   private final MeterProviderSharedState sharedState;
 
-  SdkMeterProvider(Clock clock, Resource resource) {
+  SdkMeterProvider(
+      Clock clock, Resource resource, ImmutableList<MetricsProcessor> metricsProcessors) {
     this.sharedState = MeterProviderSharedState.create(clock, resource);
     this.registry =
         new ComponentRegistry<>(
-            instrumentationLibraryInfo -> new SdkMeter(sharedState, instrumentationLibraryInfo));
+            instrumentationLibraryInfo -> {
+              final MeterSharedState meterSharedState =
+                  MeterSharedState.create(instrumentationLibraryInfo, metricsProcessors);
+              return new SdkMeter(sharedState, meterSharedState);
+            });
   }
 
   @Override

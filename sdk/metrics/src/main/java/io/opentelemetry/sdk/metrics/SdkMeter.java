@@ -17,11 +17,9 @@ final class SdkMeter implements Meter {
   private final MeterProviderSharedState meterProviderSharedState;
   private final MeterSharedState meterSharedState;
 
-  SdkMeter(
-      MeterProviderSharedState meterProviderSharedState,
-      InstrumentationLibraryInfo instrumentationLibraryInfo) {
+  SdkMeter(MeterProviderSharedState meterProviderSharedState, MeterSharedState meterSharedState) {
     this.meterProviderSharedState = meterProviderSharedState;
-    this.meterSharedState = MeterSharedState.create(instrumentationLibraryInfo);
+    this.meterSharedState = meterSharedState;
   }
 
   InstrumentationLibraryInfo getInstrumentationLibraryInfo() {
