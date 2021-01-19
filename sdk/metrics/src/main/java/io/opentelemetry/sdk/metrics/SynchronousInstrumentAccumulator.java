@@ -5,7 +5,10 @@
 
 package io.opentelemetry.sdk.metrics;
 
+import com.google.common.collect.ImmutableList;
 import io.opentelemetry.api.common.Labels;
+import io.opentelemetry.api.metrics.Instrument;
+import io.opentelemetry.context.Context;
 import io.opentelemetry.sdk.metrics.aggregator.Aggregator;
 import io.opentelemetry.sdk.metrics.aggregator.AggregatorHandle;
 import io.opentelemetry.sdk.metrics.common.InstrumentDescriptor;
@@ -21,6 +24,7 @@ final class SynchronousInstrumentAccumulator<T> extends AbstractAccumulator {
   private final ReentrantLock collectLock;
   private final Aggregator<T> aggregator;
   private final InstrumentProcessor<T> instrumentProcessor;
+  private final ImmutableList<MetricsProcessor> metricsProcessors;
 
   static <T> SynchronousInstrumentAccumulator<T> create(
       MeterProviderSharedState meterProviderSharedState,
@@ -30,18 +34,26 @@ final class SynchronousInstrumentAccumulator<T> extends AbstractAccumulator {
         getAggregator(meterProviderSharedState, meterSharedState, descriptor);
     return new SynchronousInstrumentAccumulator<>(
         aggregator,
-        new InstrumentProcessor<>(aggregator, meterProviderSharedState.getStartEpochNanos()));
+        new InstrumentProcessor<>(aggregator, meterProviderSharedState.getStartEpochNanos()),
+        ImmutableList.of());
   }
 
   SynchronousInstrumentAccumulator(
-      Aggregator<T> aggregator, InstrumentProcessor<T> instrumentProcessor) {
+      Aggregator<T> aggregator,
+      InstrumentProcessor<T> instrumentProcessor,
+      ImmutableList<MetricsProcessor> metricsProcessors) {
+    this.metricsProcessors = metricsProcessors;
     aggregatorLabels = new ConcurrentHashMap<>();
     collectLock = new ReentrantLock();
     this.aggregator = aggregator;
     this.instrumentProcessor = instrumentProcessor;
   }
 
-  AggregatorHandle<?> bind(Labels labels) {
+  AggregatorHandle<?> bind(Labels labels, Instrument instrument) {
+    final Context ctx = Context.current();
+    for (MetricsProcessor mp : metricsProcessors) {
+      labels = mp.onLabelsBound(ctx, instrument, labels);
+    }
     Objects.requireNonNull(labels, "labels");
     AggregatorHandle<T> aggregatorHandle = aggregatorLabels.get(labels);
     if (aggregatorHandle != null && aggregatorHandle.acquire()) {

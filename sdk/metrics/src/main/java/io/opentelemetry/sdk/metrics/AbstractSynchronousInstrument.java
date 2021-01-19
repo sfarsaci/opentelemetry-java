@@ -26,6 +26,6 @@ abstract class AbstractSynchronousInstrument extends AbstractInstrument {
   }
 
   AggregatorHandle<?> acquireHandle(Labels labels) {
-    return accumulator.bind(labels);
+    return accumulator.bind(labels, this);
   }
 }
